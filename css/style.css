@@ -914,3 +914,203 @@ button {
         display: none;
     }
 }
+
+/* ==================== MODAL E SALA DE ESPERA ONLINE ==================== */
+
+.online-modal-card {
+    width: min(410px, 92%);
+}
+
+.modal-field {
+    text-align: left;
+    margin-bottom: 14px;
+}
+
+.modal-field label {
+    display: block;
+    color: var(--cyan);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+}
+
+.modal-field input,
+.join-row input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid #ffffff25;
+    border-radius: 10px;
+    background: #0a1122;
+    color: var(--white);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    outline: none;
+}
+
+.modal-field input:focus,
+.join-row input:focus {
+    border-color: var(--cyan);
+}
+
+.modal-btn {
+    width: 100%;
+    padding: 13px;
+}
+
+.modal-divider {
+    margin: 16px 0 12px;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+.join-row {
+    display: flex;
+    gap: 8px;
+}
+
+.join-row input {
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-align: center;
+}
+
+.join-btn {
+    padding: 0 18px;
+    border: 0;
+    border-radius: 10px;
+    background: #283a5e;
+    color: var(--cyan);
+    font-size: 11px;
+    font-weight: 900;
+    transition: .15s;
+}
+
+.join-btn:hover {
+    background: #344b78;
+}
+
+.modal-error {
+    color: #ff7171 !important;
+    font-size: 11px !important;
+    margin: 10px 0 0 !important;
+    min-height: 15px;
+}
+
+.room-code-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.copy-btn {
+    padding: 4px 8px;
+    border: 1px solid #59e8d544;
+    border-radius: 6px;
+    background: #59e8d515;
+    color: var(--cyan);
+    font-size: 8px;
+    font-weight: 800;
+}
+
+.big-room-code {
+    font-size: 38px !important;
+    letter-spacing: 8px;
+    color: var(--cyan) !important;
+    margin: 10px 0 !important;
+}
+
+.copy-big-btn {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 16px;
+    border: 1px solid #59e8d544;
+    border-radius: 10px;
+    background: #59e8d514;
+    color: var(--cyan);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.waiting-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.waiting-chip {
+    padding: 6px 12px;
+    border: 1px solid var(--cyan);
+    border-radius: 20px;
+    background: #ffffff08;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* ==================== SELETOR DE COMPLETAR COM BOTS ==================== */
+
+.waiting-room-card {
+    width: min(430px, 92%);
+}
+
+.fill-bots-box {
+    margin-bottom: 18px;
+    padding: 12px;
+    border: 1px solid #ffffff16;
+    border-radius: 12px;
+    background: #0a112299;
+}
+
+.fill-bots-label {
+    display: block;
+    color: var(--muted);
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+}
+
+.fill-bots-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.fill-option {
+    padding: 9px 8px;
+    border: 1px solid #ffffff1a;
+    border-radius: 8px;
+    background: #141f38;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 800;
+    transition: .15s;
+}
+
+.fill-option:hover:not(:disabled) {
+    border-color: #ffffff44;
+    color: var(--white);
+}
+
+.fill-option.active {
+    border-color: var(--cyan);
+    background: #59e8d51c;
+    color: var(--cyan);
+}
+
+.fill-option:disabled {
+    cursor: default;
+}
+
+.fill-bots-hint {
+    display: block;
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 10px;
+}

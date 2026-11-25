@@ -113,7 +113,7 @@
                         <span class="game-icon">🌐</span>
                         <div>
                             <h3>Jogar Online</h3>
-                            <p>Encontre outros jogadores e dispute a vitória.</p>
+                            <p>Crie uma sala ou entre com o código do seu amigo.</p>
                         </div>
                         <span class="game-arrow">→</span>
                     </button>
@@ -140,6 +140,41 @@
 
     </section>
 
+    <!-- MODAL CRIAR / ENTRAR NA SALA ONLINE -->
+    <div id="onlineModal" class="victory-overlay" hidden>
+        <div class="victory-card online-modal-card">
+            <small class="label">MULTIPLAYER PRIVADO</small>
+            <h2>Sala Online</h2>
+            <p>Digite seu apelido e crie uma sala ou entre com o código.</p>
+
+            <div class="modal-field">
+                <label for="playerNameInput">SEU APELIDO</label>
+                <input type="text" id="playerNameInput" maxlength="16" placeholder="Ex: João" autocomplete="off">
+            </div>
+
+            <button type="button" id="createRoomButton" class="ready-button modal-btn">
+                ✦ CRIAR NOVA SALA
+            </button>
+
+            <div class="modal-divider">
+                <span>OU ENTRE COM UM CÓDIGO</span>
+            </div>
+
+            <div class="join-row">
+                <input type="text" id="roomCodeInput" maxlength="6" placeholder="CÓDIGO (EX: A7K9)" autocomplete="off">
+                <button type="button" id="joinRoomButton" class="join-btn">
+                    ENTRAR
+                </button>
+            </div>
+
+            <p id="onlineModalError" class="modal-error"></p>
+
+            <button type="button" id="closeOnlineModal" class="back-button" style="margin-top: 14px; margin-bottom: 0;">
+                CANCELAR
+            </button>
+        </div>
+    </div>
+
     <!-- JOGO -->
     <section id="gameScreen" class="game-screen" hidden>
 
@@ -163,9 +198,14 @@
             </div>
 
             <div class="info-card">
-                <small>MODO DE JOGO</small>
-                <strong id="modeName">BOTS</strong>
-                <small id="roomCode">Partida local</small>
+                <small>CÓDIGO DA SALA</small>
+                <div class="room-code-row">
+                    <strong id="roomCode">----</strong>
+                    <button type="button" id="copyCodeButton" class="copy-btn" title="Copiar código" hidden>
+                        COPIAR
+                    </button>
+                </div>
+                <small id="modeName">Partida local</small>
             </div>
 
             <div class="info-card">
@@ -199,6 +239,41 @@
             <div class="arena-container">
                 <canvas id="gameCanvas" width="1280" height="820"></canvas>
                 <div id="game3D" hidden></div>
+
+                <!-- SALA DE ESPERA ONLINE (LOBBY DA SALA) -->
+                <div id="waitingRoomOverlay" class="victory-overlay" hidden>
+                    <div class="victory-card waiting-room-card">
+                        <small class="label">SALA PRIVADA</small>
+                        <h2 id="waitingRoomCode" class="big-room-code">----</h2>
+                        <p id="waitingRoomSubtitle">Compartilhe este código com seus amigos para entrarem na sala.</p>
+
+                        <button type="button" id="copyCodeBigButton" class="copy-big-btn">
+                            📋 COPIAR CÓDIGO DA SALA
+                        </button>
+
+                        <div id="waitingPlayersPreview" class="waiting-chips"></div>
+
+                        <!-- ESCOLHA DE COMPLETAR COM BOTS -->
+                        <div id="fillBotsBox" class="fill-bots-box">
+                            <span class="fill-bots-label">PREENCHIMENTO DA ARENA</span>
+                            <div class="fill-bots-toggle">
+                                <button type="button" id="modeHumansOnly" class="fill-option active">
+                                    👥 Só Jogadores
+                                </button>
+                                <button type="button" id="modeFillBots" class="fill-option">
+                                    🤖 Completar com Bots (8)
+                                </button>
+                            </div>
+                            <small id="fillBotsHint" class="fill-bots-hint">
+                                Apenas os jogadores reais da sala vão participar.
+                            </small>
+                        </div>
+
+                        <button type="button" id="startOnlineMatchButton" class="ready-button modal-btn" disabled>
+                            AGUARDANDO MAIS JOGADORES...
+                        </button>
+                    </div>
+                </div>
 
                 <!-- PAINEL DE VITÓRIA -->
                 <div id="victoryOverlay" class="victory-overlay" hidden>

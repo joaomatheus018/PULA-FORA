@@ -3,72 +3,106 @@ export class MultiplayerClient {
         this.socket = null;
         this.playerId = null;
         this.roomId = null;
-        this.onUpdate = null;
+        this.pendingAction = null;
+
         this.onConnection = null;
+        this.onUpdate = null;
         this.onError = null;
     }
 
-    connect() {
-        if (this.socket?.connected) {
-            this.socket.emit("joinGame");
-            return;
+    ensureSocket() {
+        if (!window.io) {
+            this.onError?.("Servidor multiplayer não encontrado.");
+            return false;
         }
 
-        if (typeof window.io !== "function") {
-            this.onError?.("Servidor Socket.IO não encontrado. Rode 'npm start'.");
-            return;
-        }
+        if (this.socket) return true;
 
-        this.socket = window.io();
+        this.socket = window.io({ autoConnect: false });
 
         this.socket.on("connect", () => {
-            this.socket.emit("joinGame");
-        });
-
-        this.socket.on("joined", data => {
-            this.playerId = data.playerId;
-            this.roomId = data.roomId;
-
             this.onConnection?.(true);
-
-            if (data.state) {
-                this.onUpdate?.(data.state);
+            if (this.pendingAction) {
+                const { event, payload } = this.pendingAction;
+                this.pendingAction = null;
+                this.socket.emit(event, payload);
             }
-        });
-
-        this.socket.on("gameState", data => {
-            this.onUpdate?.(data);
-        });
-
-        this.socket.on("connect_error", () => {
-            this.onConnection?.(false);
-            this.onError?.("Não foi possível conectar ao servidor.");
         });
 
         this.socket.on("disconnect", () => {
             this.onConnection?.(false);
         });
 
-        this.socket.on("gameError", message => {
-            this.onError?.(message);
+        this.socket.on("connect_error", () => {
+            this.onError?.("Não foi possível conectar ao servidor.");
         });
+
+        this.socket.on("roomError", msg => {
+            this.onError?.(msg);
+        });
+
+        this.socket.on("joined", data => {
+            this.playerId = data.playerId;
+            this.roomId = data.roomId;
+            this.onUpdate?.(data.state);
+        });
+
+        this.socket.on("gameState", state => {
+            this.onUpdate?.(state);
+        });
+
+        return true;
+    }
+
+    createRoom(name) {
+        if (!this.ensureSocket()) return;
+
+        if (this.socket.connected) {
+            this.socket.emit("createRoom", { name });
+        } else {
+            this.pendingAction = { event: "createRoom", payload: { name } };
+            this.socket.connect();
+        }
+    }
+
+    joinRoom(roomId, name) {
+        if (!this.ensureSocket()) return;
+
+        if (this.socket.connected) {
+            this.socket.emit("joinRoom", { roomId, name });
+        } else {
+            this.pendingAction = { event: "joinRoom", payload: { roomId, name } };
+            this.socket.connect();
+        }
+    }
+
+    setFillBots(fillWithBots) {
+        if (!this.socket?.connected) return;
+        this.socket.emit("setFillBots", { fillWithBots });
+    }
+
+    startMatch() {
+        if (!this.socket?.connected) return;
+        this.socket.emit("startMatch");
     }
 
     setAim(angle, power) {
-        this.socket?.emit("setAim", { angle, power });
+        if (!this.socket?.connected) return;
+        this.socket.emit("setAim", { angle, power });
     }
 
     ready() {
-        this.socket?.emit("playerReady");
+        if (!this.socket?.connected) return;
+        this.socket.emit("playerReady");
     }
 
     disconnect() {
+        this.pendingAction = null;
         if (this.socket) {
             this.socket.disconnect();
-            this.socket = null;
         }
-
         this.playerId = null;
         this.roomId = null;
+        this.onConnection?.(false);
     }
 }

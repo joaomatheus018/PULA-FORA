@@ -7,6 +7,8 @@ const $ = id => document.getElementById(id);
 
 const lobbyScreen = $("lobbyScreen");
 const gameScreen = $("gameScreen");
+const onlineModal = $("onlineModal");
+const waitingRoomOverlay = $("waitingRoomOverlay");
 const victoryOverlay = $("victoryOverlay");
 
 const canvas = $("gameCanvas");
@@ -45,15 +47,82 @@ function selectVisual(mode) {
 $("select2D").addEventListener("click", () => selectVisual("2d"));
 $("select3D").addEventListener("click", () => selectVisual("3d"));
 
-// ENTRAR NO JOGO
+// MODAL DE SALA ONLINE
+$("onlineButton").addEventListener("click", () => {
+    $("onlineModalError").textContent = "";
+    onlineModal.hidden = false;
+    $("playerNameInput").focus();
+});
+
+$("closeOnlineModal").addEventListener("click", () => {
+    onlineModal.hidden = true;
+});
+
+$("createRoomButton").addEventListener("click", async () => {
+    const name = $("playerNameInput").value.trim() || "Jogador 1";
+    $("onlineModalError").textContent = "";
+    await enterGame("online");
+    multiplayer.createRoom(name);
+});
+
+$("joinRoomButton").addEventListener("click", async () => {
+    const code = $("roomCodeInput").value.trim().toUpperCase();
+    if (!code || code.length < 4) {
+        $("onlineModalError").textContent = "Digite o código de 4 letras da sala!";
+        return;
+    }
+    const name = $("playerNameInput").value.trim() || "Convidado";
+    $("onlineModalError").textContent = "";
+    await enterGame("online");
+    multiplayer.joinRoom(code, name);
+});
+
+$("roomCodeInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") $("joinRoomButton").click();
+});
+
+$("botsButton").addEventListener("click", () => enterGame("bots"));
+
+// BOTÕES DE COMPLETAR COM BOTS NO LOBBY ONLINE
+$("modeHumansOnly").addEventListener("click", () => {
+    if (state?.hostId !== localPlayerId) return;
+    multiplayer.setFillBots(false);
+});
+
+$("modeFillBots").addEventListener("click", () => {
+    if (state?.hostId !== localPlayerId) return;
+    multiplayer.setFillBots(true);
+});
+
+// COPIAR CÓDIGO DA SALA
+function copyRoomCode(btn) {
+    const code = multiplayer.roomId;
+    if (!code) return;
+    navigator.clipboard?.writeText(code);
+    const original = btn.textContent;
+    btn.textContent = "✓ COPIADO!";
+    setTimeout(() => {
+        btn.textContent = original;
+    }, 1500);
+}
+
+$("copyCodeButton").addEventListener("click", () => copyRoomCode($("copyCodeButton")));
+$("copyCodeBigButton").addEventListener("click", () => copyRoomCode($("copyCodeBigButton")));
+
+$("startOnlineMatchButton").addEventListener("click", () => {
+    multiplayer.startMatch();
+});
+
+// ENTRAR NA TELA DE JOGO
 async function enterGame(mode) {
     gameMode = mode;
 
+    onlineModal.hidden = true;
     lobbyScreen.hidden = true;
     gameScreen.hidden = false;
     victoryOverlay.hidden = true;
+    waitingRoomOverlay.hidden = true;
 
-    $("modeName").textContent = mode === "bots" ? "COM BOTS" : "ONLINE";
     $("selectedMode").textContent = visualMode === "2d" ? "MODO 2D" : "MODO 3D";
 
     canvas.hidden = visualMode !== "2d";
@@ -91,18 +160,18 @@ async function enterGame(mode) {
     if (mode === "bots") {
         $("connectionText").textContent = "Modo local";
         $("connection").classList.add("online");
-        $("roomCode").textContent = "Partida contra Bots";
+        $("roomCode").textContent = "BOTS";
+        $("modeName").textContent = "Partida contra Bots";
+        $("copyCodeButton").hidden = true;
         startBotsGame();
     } else {
         $("connectionText").textContent = "Conectando...";
         $("connection").classList.remove("online");
-        $("roomCode").textContent = "Buscando sala...";
-        multiplayer.connect();
+        $("roomCode").textContent = "----";
+        $("modeName").textContent = "Multiplayer Online";
+        $("copyCodeButton").hidden = false;
     }
 }
-
-$("onlineButton").addEventListener("click", () => enterGame("online"));
-$("botsButton").addEventListener("click", () => enterGame("bots"));
 
 // SAIR
 function leaveGame() {
@@ -120,6 +189,7 @@ function leaveGame() {
     localPlayerId = null;
 
     victoryOverlay.hidden = true;
+    waitingRoomOverlay.hidden = true;
     lobbyScreen.hidden = false;
     gameScreen.hidden = true;
 
@@ -135,9 +205,8 @@ function restartMatch() {
     victoryOverlay.hidden = true;
     if (gameMode === "bots") {
         startBotsGame();
-    } else {
-        multiplayer.disconnect();
-        multiplayer.connect();
+    } else if (state?.hostId === localPlayerId) {
+        multiplayer.startMatch();
     }
 }
 
@@ -151,7 +220,13 @@ multiplayer.onConnection = connected => {
 };
 
 multiplayer.onError = message => {
-    $("canvasHint").textContent = message;
+    if (!state || state.status === "waiting") {
+        leaveGame();
+        onlineModal.hidden = false;
+        $("onlineModalError").textContent = message;
+    } else {
+        $("canvasHint").textContent = message;
+    }
 };
 
 multiplayer.onUpdate = newState => {
@@ -174,7 +249,7 @@ multiplayer.onUpdate = newState => {
         renderer?.setAim(null);
     }
 
-    $("roomCode").textContent = "Sala: " + (multiplayer.roomId || "---");
+    $("roomCode").textContent = multiplayer.roomId || "----";
     updateGame();
 };
 
@@ -186,6 +261,7 @@ function startBotsGame() {
     aim = null;
     dragging = false;
     victoryOverlay.hidden = true;
+    waitingRoomOverlay.hidden = true;
     updatePower(0);
 
     state = {
@@ -258,7 +334,6 @@ function positionPlayers() {
     });
 }
 
-// BOTS PENSAM E CONFIRMAM SOZINHOS
 function scheduleBotsTurn() {
     if (botThinkTimer) {
         clearTimeout(botThinkTimer);
@@ -651,7 +726,7 @@ function updateGame() {
     const player = getPlayer();
 
     $("playerCount").textContent = state.players.length + "/8";
-    $("roundInfo").textContent = "Rodada " + state.round;
+    $("roundInfo").textContent = state.round > 0 ? "Rodada " + state.round : "Sala de espera";
 
     const labels = {
         waiting: "Aguardando jogadores",
@@ -692,10 +767,13 @@ function updateGame() {
 
         const name = document.createElement("span");
         name.className = "player-name";
-        name.textContent = p.name + (p.id === localPlayerId ? " (você)" : "");
+        const crown = p.isHost ? "👑 " : "";
+        name.textContent = crown + p.name + (p.id === localPlayerId ? " (você)" : "");
 
         const status = document.createElement("small");
-        if (state.status === "finished") {
+        if (state.status === "waiting") {
+            status.textContent = p.isHost ? "LÍDER" : "NA SALA";
+        } else if (state.status === "finished") {
             status.textContent = p.alive ? "🏆 VENCEDOR" : "ELIMINADO";
         } else {
             status.textContent = !p.alive ? "ELIMINADO" : p.falling ? "CAINDO..." : p.ready ? "PRONTO" : "ESCOLHENDO";
@@ -705,34 +783,92 @@ function updateGame() {
         list.appendChild(row);
     });
 
-    if (state.status === "finished") {
-        victoryOverlay.hidden = false;
-        $("winnerTitle").textContent =
-            state.winnerId === localPlayerId
-                ? "Você venceu!"
-                : `${state.winnerName} venceu!`;
-        $("winnerSubtitle").textContent =
-            state.winnerName === "Ninguém"
-                ? `Empate! Todos caíram na Rodada ${state.round}.`
-                : `Último sobrevivente na Rodada ${state.round}.`;
-        $("canvasHint").textContent = `${state.winnerName} venceu a partida!`;
-    } else {
+    // OVERLAY DA SALA DE ESPERA ONLINE
+    if (gameMode === "online" && state.status === "waiting") {
+        waitingRoomOverlay.hidden = false;
         victoryOverlay.hidden = true;
 
-        if (state.status === "aiming") {
-            if (!player?.alive) {
-                $("canvasHint").textContent = "Você foi eliminado! Os bots continuam jogando até o vencedor...";
-            } else if (player?.ready) {
-                $("canvasHint").textContent = "Jogada confirmada! Aguardando os outros...";
-            } else if (player?.power > 0) {
-                $("canvasHint").textContent = `Força ${player.power}% definida! Clique em CONFIRMAR JOGADA.`;
-            } else {
-                $("canvasHint").textContent = "Clique e arraste na arena para escolher direção e força.";
-            }
-        } else if (state.status === "running") {
-            $("canvasHint").textContent = "TODOS LANÇADOS! SOBREVIVA!";
+        $("waitingRoomCode").textContent = state.roomId || multiplayer.roomId || "----";
+
+        const chips = $("waitingPlayersPreview");
+        chips.replaceChildren();
+        state.players.forEach((p, i) => {
+            const chip = document.createElement("span");
+            chip.className = "waiting-chip";
+            chip.style.borderColor = COLORS[i % COLORS.length];
+            chip.textContent = (p.isHost ? "👑 " : "") + p.name;
+            chips.appendChild(chip);
+        });
+
+        const isHost = state.hostId === localPlayerId;
+        const fillBots = Boolean(state.fillWithBots);
+
+        $("modeHumansOnly").classList.toggle("active", !fillBots);
+        $("modeFillBots").classList.toggle("active", fillBots);
+        $("modeHumansOnly").disabled = !isHost;
+        $("modeFillBots").disabled = !isHost;
+
+        const botsCount = Math.max(0, 8 - state.players.length);
+        $("fillBotsHint").textContent = fillBots
+            ? `Serão adicionados ${botsCount} bot(s) para completar 8 jogadores.`
+            : "Apenas os jogadores reais da sala vão participar.";
+
+        const startBtn = $("startOnlineMatchButton");
+
+        if (isHost) {
+            const canStart = fillBots || state.players.length >= 2;
+            startBtn.disabled = !canStart;
+            startBtn.textContent = !canStart
+                ? "AGUARDANDO AMIGOS ENTRAREM..."
+                : fillBots
+                    ? `INICIAR (${state.players.length} JOGADOR(ES) + ${botsCount} BOTS)`
+                    : `INICIAR PARTIDA (${state.players.length} JOGADORES)`;
         } else {
-            $("canvasHint").textContent = "Aguardando mais jogadores entrarem na sala...";
+            startBtn.disabled = true;
+            startBtn.textContent = "AGUARDANDO O LÍDER INICIAR...";
+        }
+
+        $("canvasHint").textContent = "Compartilhe o código da sala para seus amigos entrarem!";
+    } else {
+        waitingRoomOverlay.hidden = true;
+
+        if (state.status === "finished") {
+            victoryOverlay.hidden = false;
+            $("winnerTitle").textContent =
+                state.winnerId === localPlayerId
+                    ? "Você venceu!"
+                    : `${state.winnerName} venceu!`;
+            $("winnerSubtitle").textContent =
+                state.winnerName === "Ninguém"
+                    ? `Empate! Todos caíram na Rodada ${state.round}.`
+                    : `Último sobrevivente na Rodada ${state.round}.`;
+
+            const playAgainBtn = $("playAgainButton");
+            if (gameMode === "online" && state.hostId !== localPlayerId) {
+                playAgainBtn.disabled = true;
+                playAgainBtn.textContent = "AGUARDANDO O LÍDER REINICIAR...";
+            } else {
+                playAgainBtn.disabled = false;
+                playAgainBtn.textContent = "JOGAR NOVAMENTE";
+            }
+
+            $("canvasHint").textContent = `${state.winnerName} venceu a partida!`;
+        } else {
+            victoryOverlay.hidden = true;
+
+            if (state.status === "aiming") {
+                if (!player?.alive) {
+                    $("canvasHint").textContent = "Você foi eliminado! Assistindo à rodada...";
+                } else if (player?.ready) {
+                    $("canvasHint").textContent = "Jogada confirmada! Aguardando os outros...";
+                } else if (player?.power > 0) {
+                    $("canvasHint").textContent = `Força ${player.power}% definida! Clique em CONFIRMAR JOGADA.`;
+                } else {
+                    $("canvasHint").textContent = "Clique e arraste na arena para escolher direção e força.";
+                }
+            } else if (state.status === "running") {
+                $("canvasHint").textContent = "TODOS LANÇADOS! SOBREVIVA!";
+            }
         }
     }
 

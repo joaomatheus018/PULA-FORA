@@ -35,6 +35,7 @@ let aim = null;
 let dragging = false;
 let localTimer = null;
 let botThinkTimer = null;
+let onlineCountdownTimer = null;
 let countdownStarted = false;
 
 // ESCOLHA 2D OU 3D
@@ -170,12 +171,34 @@ async function enterGame(mode) {
         $("roomCode").textContent = "----";
         $("modeName").textContent = "Multiplayer Online";
         $("copyCodeButton").hidden = false;
+        startOnlineCountdownTicker();
+    }
+}
+
+// Atualiza o visor da contagem regressiva suavemente no modo Firebase
+function startOnlineCountdownTicker() {
+    stopOnlineCountdownTicker();
+    onlineCountdownTimer = setInterval(() => {
+        if (gameMode !== "online" || !state || state.status !== "aiming") return;
+        const aimEnd = multiplayer.rawRoom?.aimEnd;
+        if (aimEnd) {
+            state.countdown = Math.max(0, (aimEnd - Date.now()) / 1000);
+            $("timer").textContent = Math.max(0, Math.ceil(state.countdown));
+        }
+    }, 150);
+}
+
+function stopOnlineCountdownTicker() {
+    if (onlineCountdownTimer) {
+        clearInterval(onlineCountdownTimer);
+        onlineCountdownTimer = null;
     }
 }
 
 // SAIR
 function leaveGame() {
     stopLocalGame();
+    stopOnlineCountdownTicker();
     multiplayer.disconnect();
 
     if (renderer) {
@@ -533,7 +556,7 @@ $("readyButton").addEventListener("click", () => {
     checkAllReadyLocal();
 });
 
-// CONTAGEM REGRESSIVA
+// CONTAGEM REGRESSIVA LOCAL (BOTS)
 function startCountdown() {
     if (countdownStarted) return;
     countdownStarted = true;
@@ -557,7 +580,7 @@ function startCountdown() {
     }, 1000);
 }
 
-// LANÇAMENTO SIMULTÂNEO
+// LANÇAMENTO SIMULTÂNEO LOCAL (BOTS)
 function launchPlayers() {
     state.status = "running";
     state.countdown = null;
@@ -877,6 +900,7 @@ function updateGame() {
 
 window.addEventListener("beforeunload", () => {
     stopLocalGame();
+    stopOnlineCountdownTicker();
     multiplayer.disconnect();
     renderer?.destroy();
 });

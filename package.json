@@ -1,0 +1,15 @@
+
+{
+  "name": "pula-fora",
+  "version": "1.0.0",
+  "description": "Jogo multiplayer 2D e 3D",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1"
+  }
+}

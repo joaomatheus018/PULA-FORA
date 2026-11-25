@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PULA FORA | Arena</title>
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.170.0/build/three.module.js"
+        }
+    }
+    </script>
+</head>
+
+<body>
+
+<div class="background-glow"></div>
+
+<header class="topbar">
+    <div class="brand">
+        <div class="brand-icon">✦</div>
+        <div>
+            <strong>PULA FORA</strong>
+            <small>LAST PLAYER STANDING</small>
+        </div>
+    </div>
+
+    <div class="connection" id="connection">
+        <span></span>
+        <p id="connectionText">Desconectado</p>
+    </div>
+</header>
+
+<main class="app-main">
+
+    <!-- LOBBY -->
+    <section id="lobbyScreen" class="lobby">
+
+        <div class="hero">
+            <div class="hero-tag">✦ UMA NOVA ARENA ESPERA POR VOCÊ</div>
+            <h1>PULA <span>FORA.</span></h1>
+            <p>
+                Escolha sua direção, calcule sua força e seja
+                o último jogador em pé.
+            </p>
+        </div>
+
+        <div class="lobby-grid">
+            <div>
+                <div class="section-title">
+                    <span>01</span>
+                    <div>
+                        <h2>Escolha sua experiência</h2>
+                        <p>Como você quer jogar?</p>
+                    </div>
+                </div>
+
+                <div class="visual-options">
+                    <button type="button" class="visual-card selected" id="select2D">
+                        <div class="visual-preview preview-2d">
+                            <div class="preview-stars"></div>
+                            <div class="preview-arena">
+                                <i></i><i></i><i></i><i></i>
+                                <b>2D</b>
+                            </div>
+                            <span class="preview-label">VISÃO SUPERIOR</span>
+                        </div>
+
+                        <div class="visual-info">
+                            <div>
+                                <h3>Modo 2D</h3>
+                                <p>Visão de cima, jogabilidade clássica e colorida.</p>
+                            </div>
+                            <span class="selection-indicator">✓</span>
+                        </div>
+                    </button>
+
+                    <button type="button" class="visual-card" id="select3D">
+                        <div class="visual-preview preview-3d">
+                            <div class="preview-stars"></div>
+                            <div class="preview-planet"></div>
+                            <div class="preview-platform">
+                                <div class="preview-character"></div>
+                            </div>
+                            <span class="preview-label">VISÃO TRIDIMENSIONAL</span>
+                        </div>
+
+                        <div class="visual-info">
+                            <div>
+                                <h3>Modo 3D</h3>
+                                <p>Arena espacial com profundidade e iluminação.</p>
+                            </div>
+                            <span class="selection-indicator">✓</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <div class="section-title">
+                    <span>02</span>
+                    <div>
+                        <h2>Escolha seu modo</h2>
+                        <p>Quem você vai enfrentar?</p>
+                    </div>
+                </div>
+
+                <div class="game-options">
+                    <button type="button" id="onlineButton" class="game-card online">
+                        <span class="game-icon">🌐</span>
+                        <div>
+                            <h3>Jogar Online</h3>
+                            <p>Encontre outros jogadores e dispute a vitória.</p>
+                        </div>
+                        <span class="game-arrow">→</span>
+                    </button>
+
+                    <button type="button" id="botsButton" class="game-card bots">
+                        <span class="game-icon">🤖</span>
+                        <div>
+                            <h3>Jogar com Bots</h3>
+                            <p>Enfrente adversários controlados pelo computador.</p>
+                        </div>
+                        <span class="game-arrow">→</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="lobby-footer">
+            <span>2 A 8 JOGADORES</span>
+            <span>✦</span>
+            <span>UMA ARENA</span>
+            <span>✦</span>
+            <span>UM VENCEDOR</span>
+        </div>
+
+    </section>
+
+    <!-- JOGO -->
+    <section id="gameScreen" class="game-screen" hidden>
+
+        <aside class="sidebar">
+            <button type="button" id="backButton" class="back-button">
+                ← VOLTAR AO LOBBY
+            </button>
+
+            <div class="game-logo">
+                <span>✦</span>
+                <div>
+                    <strong>PULA FORA</strong>
+                    <small id="selectedMode">MODO 2D</small>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <small class="label">SUA PARTIDA</small>
+                <h2>Sobreviva<br>à arena.</h2>
+                <p>Clique e arraste na arena para mirar como um estilingue.</p>
+            </div>
+
+            <div class="info-card">
+                <small>MODO DE JOGO</small>
+                <strong id="modeName">BOTS</strong>
+                <small id="roomCode">Partida local</small>
+            </div>
+
+            <div class="info-card">
+                <small>STATUS</small>
+                <strong id="gameStatus">Preparando partida</strong>
+                <small id="roundInfo">Rodada 1</small>
+            </div>
+
+            <div class="instructions">
+                <small class="label">COMO JOGAR</small>
+                <p><b>01</b> Clique e arraste na arena.</p>
+                <p><b>02</b> Solte para travar a mira.</p>
+                <p><b>03</b> Clique em Confirmar Jogada.</p>
+                <p><b>04</b> Sobreviva ao lançamento!</p>
+            </div>
+        </aside>
+
+        <section class="arena-section">
+            <div class="arena-header">
+                <div>
+                    <small class="label">ARENA PRINCIPAL</small>
+                    <h2>Ilha flutuante</h2>
+                </div>
+
+                <div class="round-counter">
+                    <small>CONTAGEM</small>
+                    <strong id="timer">--</strong>
+                </div>
+            </div>
+
+            <div class="arena-container">
+                <canvas id="gameCanvas" width="1280" height="820"></canvas>
+                <div id="game3D" hidden></div>
+
+                <!-- PAINEL DE VITÓRIA -->
+                <div id="victoryOverlay" class="victory-overlay" hidden>
+                    <div class="victory-card">
+                        <span class="victory-crown">🏆</span>
+                        <small class="label">FIM DE PARTIDA</small>
+                        <h2 id="winnerTitle">Você venceu!</h2>
+                        <p id="winnerSubtitle">Sobreviveu até a Rodada 1</p>
+                        <div class="victory-actions">
+                            <button type="button" id="playAgainButton" class="ready-button">
+                                JOGAR NOVAMENTE
+                            </button>
+                            <button type="button" id="victoryLobbyButton" class="back-button">
+                                VOLTAR AO LOBBY
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="arena-hint" id="canvasHint">
+                    Arraste na arena para escolher direção e força.
+                </div>
+            </div>
+
+            <div class="game-controls">
+                <div class="power-info">
+                    <small>FORÇA DA JOGADA</small>
+                    <strong id="powerValue">0%</strong>
+                    <div class="power-track">
+                        <div id="powerBar"></div>
+                    </div>
+                </div>
+
+                <button type="button" id="readyButton" class="ready-button" disabled>
+                    CONFIRMAR JOGADA
+                </button>
+
+                <button type="button" id="resetButton" class="reset-button" title="Reiniciar Partida">
+                    ↻
+                </button>
+            </div>
+        </section>
+
+        <aside class="players-sidebar">
+            <div class="players-heading">
+                <div>
+                    <small class="label">PARTICIPANTES</small>
+                    <h2>Jogadores</h2>
+                </div>
+                <span id="playerCount">0/8</span>
+            </div>
+
+            <div id="playersList" class="players-list">
+                <p class="empty">Aguardando jogadores...</p>
+            </div>
+
+            <div class="tip-card">
+                <span>💡</span>
+                <p>
+                    Uma força muito grande pode jogar você para fora sozinho. Mire com cuidado!
+                </p>
+            </div>
+        </aside>
+
+    </section>
+
+</main>
+
+<script src="/socket.io/socket.io.js"></script>
+<script type="module" src="/js/main.js"></script>
+
+</body>
+</html>
